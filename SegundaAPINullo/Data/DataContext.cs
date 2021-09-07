@@ -22,6 +22,6 @@ namespace SegundaAPINullo.Data
         public DbSet<Product> Porducts { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<User> Users { get; set; }
-       
+      //  public object Products { get; internal set; }
     }
 }

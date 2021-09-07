@@ -32,10 +32,15 @@ namespace SegundaAPINullo.Controllers
         //cria um método
         //Não trava a aplicação, e deixa que mais de uma função seja executada simultâneamente
        //define que o método é assíncrono (cada função na sua vez)
-        public async Task<ActionResult<List<Category>>> Get()
+        public async Task<ActionResult<List<Category>>> Get(
+            [FromServices] DataContext context)
         {
+
+            var categories = await context.Categories.AsNoTracking().ToListAsync();
+
+            return categories;
             //da um retorno
-            return new List<Category>();
+            //return new List<Category>();
         }
 
 
@@ -43,10 +48,12 @@ namespace SegundaAPINullo.Controllers
         // id:int = define um parâmetro de busca, apenas os números inteiros
         [Route("{id: int}")]
         //cria um método
-        public async Task<ActionResult<Category>> GetById(int id)
+        public async Task<ActionResult<Category>> GetById(
+             int id,
+             [FromServices] DataContext context)
         {
-            //da um retorno
-            return new Category();
+            var categories = await context.Categories.AsNoTracking().ToListAsync();
+            return Ok(categories);
         }
 
         [HttpPost]
@@ -73,7 +80,7 @@ namespace SegundaAPINullo.Controllers
             {
                 //adicionando uma categoria
                 context.Categories.Add(model);
-                //guarda os "dados"
+                //guarda os "dados" de forma assíncrona
                 await context.SaveChangesAsync();
                 //da um retorno de confirmação
                 return Ok(model);
@@ -89,10 +96,12 @@ namespace SegundaAPINullo.Controllers
 
 
         [HttpPut]
+        //O que é inserido no route, aparece na url
         [Route("{id:int}")]
         //cria um método
         public async Task<ActionResult<List<Category>>> Put(int id, 
             [FromBody]Category model,
+            //atribui que o data vem do serviço
             [FromServices] DataContext context)
         {
             //da um retorno
@@ -114,11 +123,14 @@ namespace SegundaAPINullo.Controllers
             //tentativa de atualização
             try
             {
+                //Entry= entrada/ Category = categoria/model = modelo/State = estado/Modified = modificado
                 context.Entry<Category>(model).State = EntityState.Modified;
+               //Salva as alterações de forma assíncrona
                 await context.SaveChangesAsync();
+                //retorna um ok(sucesso)
                 return Ok(model);
             }
-            //caso dê erro
+            //caso dê erro (erro de concorrência = 2 tipos sendo atualizados ao mesmo tempo)
             catch (DbUpdateConcurrencyException)
             {
                 //mostra a mensagem de erro
@@ -130,17 +142,38 @@ namespace SegundaAPINullo.Controllers
 
         [HttpDelete]
         [Route("{id:int}")]
-        //cria um método
+        //cria um método assíncrono
         public async Task<ActionResult<List<Category>>> Delete(
+            int id,
             [FromServices]DataContext context
             )
         {
-
+            //await segue a pausa de leitura por linha. FirstOrDefaultAsync = pega as categorias por ordem 
             var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
 
+            //Se categoria for igual a nulo
+            if (category == null)
+            {
+                //retorna uma mensagem
+                return NotFound(new { message = "Esta categoria não foi encontrada!" });
+            }
 
-            //da um retorno
-            return Ok();
+            //tentativa de remoção
+            try
+            {
+                //Inicia o método de remoção de categoria
+                context.Categories.Remove(category);
+                //salva as alterações de forma assíncrona
+                await context.SaveChangesAsync();
+                //da um retorno
+                return Ok(category);
+            }
+            //caso dê erro
+            catch (Exception)
+            {
+                //da um retorno
+                return BadRequest(new { message = "Não foi possível excluir"});
+            }
         }
     }
 }

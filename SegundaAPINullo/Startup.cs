@@ -9,6 +9,7 @@ using SegundaAPINullo.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SegundaAPINullo
@@ -30,8 +31,18 @@ namespace SegundaAPINullo
         {
             //faz a adição dos controllers
             services.AddControllers();
+            //transformando chave criada para bts
+            var key = Encoding.ASCII.GetBytes(Settings.Secret)
+            //aqui ficaria método do token (autenticação)
+
+
+
+
             //informa para a aplicação a existência de um context
-            services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("Database"));
+            // services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("Database"));
+            //Conexão com o BD
+            services.AddDbContext<DataContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("connectionString")));
+
             //Configuração para fechamento de conexão com o banco
             services.AddScoped<DataContext, DataContext>();
         }
@@ -49,6 +60,9 @@ namespace SegundaAPINullo
 
             //uso de rotas
             app.UseRouting();
+
+            //uso de autenticação
+            app.UseAuthentication();
 
             //uso de autorizações
             app.UseAuthorization();
